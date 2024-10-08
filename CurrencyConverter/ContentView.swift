@@ -12,6 +12,8 @@ struct ContentView: View {
     @State private var showSelectedCurrency = false
     @State private var leftAmount = ""
     @State private var rightAmount = ""
+    @FocusState var leftTyping
+    @FocusState var rightTyping
     
     @State var leftCurrency : Currency = .silverPeace
     @State var rightCurrency : Currency = .goldPiece
@@ -45,8 +47,16 @@ struct ContentView: View {
                         }
                         TextField("Amount", text: $leftAmount)
                             .textFieldStyle(.roundedBorder)
+                            .focused($leftTyping)
+                            .multilineTextAlignment(.leading)
+                            .keyboardType(.decimalPad)
+                            .onChange(of: leftAmount) { oldValue, newValue in
+                                if leftTyping {
+                                    rightAmount = leftCurrency.convert(amountString: leftAmount, currency: rightCurrency)
+                                }
+                            }
                     }
-//                    Equak sign
+
                     Image(systemName: "equal")
                         .font(.largeTitle)
                         .foregroundStyle(.white)
@@ -67,6 +77,14 @@ struct ContentView: View {
                         }
                         TextField("Amount", text: $rightAmount)
                             .textFieldStyle(.roundedBorder)
+                            .focused($rightTyping)
+                            .multilineTextAlignment(.trailing)
+                            .keyboardType(.decimalPad)
+                            .onChange(of: rightAmount) { oldValue, newValue in
+                                if rightTyping {
+                                    leftAmount = rightCurrency.convert(amountString: rightAmount, currency: leftCurrency)
+                                }
+                            }
                     }
                 }
                 .padding()
@@ -93,6 +111,14 @@ struct ContentView: View {
             ExchangeInfo()
         })
         
+        .onChange(of: leftCurrency, { oldValue, newValue in
+            leftAmount = rightCurrency.convert(amountString: rightAmount, currency: leftCurrency)
+
+        })
+        
+        .onChange(of: rightCurrency, { oldValue, newValue in
+            rightAmount = leftCurrency.convert(amountString: leftAmount, currency: rightCurrency)
+        })
         .sheet(isPresented: $showSelectedCurrency, content: {
             SelectCurrency(topCurrency: $leftCurrency, bottomCurrency: $rightCurrency)
         })
